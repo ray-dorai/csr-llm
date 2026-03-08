@@ -32,13 +32,18 @@ class ArithmeticDataset(Dataset):
         eos = tokenizer.token_to_id("<eos>")
         pad = tokenizer.token_to_id("<pad>")
 
+        # Pack multiple examples into each sequence so the model learns
+        # to generate chains: "3+5=8\n7-2=5\n4+1=5\n..."
+        all_ids = []
         for ex in examples:
-            ids = [bos] + encode(tokenizer, ex) + [eos]
-            if len(ids) > max_len:
-                ids = ids[:max_len]
-            else:
-                ids = ids + [pad] * (max_len - len(ids))
-            self.samples.append(torch.tensor(ids, dtype=torch.long))
+            all_ids.extend(encode(tokenizer, ex + "\n"))
+
+        # Chunk into max_len sequences
+        for start in range(0, len(all_ids) - max_len, max_len):
+            chunk = [bos] + all_ids[start : start + max_len - 2] + [eos]
+            if len(chunk) < max_len:
+                chunk = chunk + [pad] * (max_len - len(chunk))
+            self.samples.append(torch.tensor(chunk, dtype=torch.long))
 
     def __len__(self):
         return len(self.samples)
