@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tokenizers import Tokenizer, models, pre_tokenizers, trainers
+from tokenizers import Tokenizer, decoders, models, pre_tokenizers, trainers
 
 
 SPECIAL_TOKENS = ["<pad>", "<bos>", "<eos>"]
@@ -18,6 +18,7 @@ def train_tokenizer(
     """Train a BPE tokenizer on arithmetic corpus."""
     tokenizer = Tokenizer(models.BPE())
     tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+    tokenizer.decoder = decoders.ByteLevel()
 
     trainer = trainers.BpeTrainer(
         vocab_size=vocab_size,
