@@ -14,15 +14,13 @@ model:
   n_heads: 4
   d_model: 256
   d_ff: 1024
-  vocab_size: 8192
+  vocab_size: 19
   max_seq_len: 128
   dropout: 0.1
 
 tokenizer:
-  type: "bpe"
-  vocab_size: 8192
-  min_frequency: 2
-  special_tokens: ["<pad>", "<eos>", "<bos>"]
+  type: "char"
+  vocab_size: 19
 
 pretrain:
   # Pretrain base model so it can produce valid arithmetic format

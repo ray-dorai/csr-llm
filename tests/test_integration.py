@@ -36,15 +36,13 @@ def _tiny_config(tmp_dir: str) -> dict:
             "n_heads": 2,
             "d_model": 32,
             "d_ff": 64,
-            "vocab_size": 512,
+            "vocab_size": 19,
             "max_seq_len": 64,
             "dropout": 0.0,
         },
         "tokenizer": {
-            "type": "bpe",
-            "vocab_size": 512,
-            "min_frequency": 1,
-            "special_tokens": ["<pad>", "<eos>", "<bos>"],
+            "type": "char",
+            "vocab_size": 19,
         },
         "pretrain": {
             "n_examples": 200,
