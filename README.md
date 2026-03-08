@@ -12,7 +12,6 @@ CSR-LLM applies the principle of **compartmentalized self-replication** (Ghadess
 
 In CSR-LLM, each model in a population generates its own training data. That data is used to train a fresh offspring model. The offspring's performance becomes the parent's fitness score. Models that generate better training data produce better offspring and survive to the next round. Models that generate poor training data are eliminated.
 
-Over many rounds, the population evolves toward models that are increasingly effective at generating training data for their own task — a self-reinforcing loop analogous to a polymerase that copies its own gene.
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -66,16 +65,6 @@ python -m csr_llm.run_experiment --config configs/main.yaml
 
 *(To be updated after experiments)*
 
-## Citation
-
-```bibtex
-@article{csrllm2026,
-  title={Self-Improving Language Models via Compartmentalized Self-Replication},
-  author={},
-  journal={arXiv preprint arXiv:XXXX.XXXXX},
-  year={2026}
-}
-```
 
 ## Acknowledgments
 
