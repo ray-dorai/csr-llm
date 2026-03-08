@@ -27,7 +27,7 @@ tokenizer:
 pretrain:
   # Pretrain base model so it can produce valid arithmetic format
   n_examples: 50000
-  n_epochs: 10
+  n_epochs: 50
   batch_size: 64
   learning_rate: 3.0e-4
   weight_decay: 0.01
