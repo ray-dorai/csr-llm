@@ -82,8 +82,8 @@ def train_offspring(
     dataset = GeneratedDataset(parsed_examples, tokenizer, max_len=cfg["model"]["max_seq_len"])
 
     if len(dataset) == 0:
-        logger.warning("No valid training examples. Returning untrained base model.")
-        return model
+        logger.warning("No valid training examples. Returning None.")
+        return None
 
     loader = DataLoader(
         dataset,

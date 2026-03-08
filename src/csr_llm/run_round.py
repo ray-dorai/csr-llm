@@ -98,14 +98,17 @@ def run_round(
             device=device,
         )
 
-        # STEP 3: Evaluate offspring
-        score = evaluate_offspring(
-            model=offspring,
-            tokenizer=tokenizer,
-            test_set=test_set,
-            device=device,
-            max_new_tokens=cfg["evaluation"]["max_new_tokens"],
-        )
+        # STEP 3: Evaluate offspring (score 0 if no valid training data)
+        if offspring is None:
+            score = {"correct": 0, "total": len(test_set), "accuracy": 0.0, "per_operation": {}, "per_problem": []}
+        else:
+            score = evaluate_offspring(
+                model=offspring,
+                tokenizer=tokenizer,
+                test_set=test_set,
+                device=device,
+                max_new_tokens=cfg["evaluation"]["max_new_tokens"],
+            )
 
         ind.fitness = score["correct"]
         all_scores.append(score["correct"])
@@ -123,7 +126,8 @@ def run_round(
         save_score(ind.model_id, round_dir, score, metadata)
 
         # Free offspring from GPU
-        del offspring
+        if offspring is not None:
+            del offspring
         torch.cuda.empty_cache()
 
         elapsed = time.time() - t_model
