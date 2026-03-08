@@ -59,7 +59,6 @@ python -m csr_llm.run_experiment --config configs/main.yaml
 - Python 3.10+
 - PyTorch 2.0+
 - 1x GPU with ≥16GB VRAM (A40 recommended, T4/A10 possible with smaller population)
-- ~$10 for pilot, ~$65 for full experiment on RunPod
 
 ## Results
 
