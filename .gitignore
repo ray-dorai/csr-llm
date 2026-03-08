@@ -1,0 +1,37 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.pytest_cache/
+.ruff_cache/
+
+# Experiment logs (large, not committed)
+logs/
+
+# Model checkpoints
+*.pt
+*.pth
+*.bin
+
+# Tokenizer (regenerated)
+tokenizer.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+*.env
+
+# SSH keys
+runpodssh
+runpodssh.pub

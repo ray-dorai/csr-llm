@@ -1,0 +1,124 @@
+# CSR-LLM Pilot Experiment Configuration
+# Budget: ~$10 on RunPod A40
+# Goal: 5 rounds to determine if self-replication loop produces signal
+
+experiment:
+  name: "pilot-001"
+  seed: 42
+  device: "cuda"
+  output_dir: "logs/pilot-001"
+
+model:
+  architecture: "gpt2"
+  n_layers: 8
+  n_heads: 4
+  d_model: 256
+  d_ff: 1024
+  vocab_size: 8192
+  max_seq_len: 128
+  dropout: 0.1
+
+tokenizer:
+  type: "bpe"
+  vocab_size: 8192
+  min_frequency: 2
+  special_tokens: ["<pad>", "<eos>", "<bos>"]
+
+pretrain:
+  # Pretrain base model so it can produce valid arithmetic format
+  n_examples: 50000
+  n_epochs: 10
+  batch_size: 64
+  learning_rate: 3.0e-4
+  weight_decay: 0.01
+  warmup_steps: 200
+  save_every_epoch: true
+
+task:
+  type: "arithmetic"
+  difficulty: "single_digit_add_sub"
+  operations: ["+", "-"]
+  operand_range: [0, 9]
+  test_set_size: 500
+  # Test set is generated once and frozen
+  test_set_seed: 12345
+
+evolution:
+  n_rounds: 5
+  population_size: 64
+  n_islands: 4
+  models_per_island: 16
+  survivors_per_island: 2
+  offspring_per_survivor: 8
+  offspring_distribution:
+    clone: 1
+    mutant_small: 4
+    recombinant: 2
+    mutant_large: 1
+  mutation:
+    sigma_small: 0.01
+    sigma_large: 0.05
+    # Which layers to mutate (null = all)
+    target_layers: null
+  migration:
+    n_migrants_per_round: 1
+    direction: "ring"  # A→B→C→D→A
+  selection:
+    metric: "offspring_accuracy"
+    direction: "maximize"
+
+generation:
+  # How each parent generates training data
+  n_examples: 100
+  max_tokens_per_example: 20
+  temperature: 1.0
+  # Initial prefix: few-shot examples to prompt generation
+  initial_prefix: "3+5=8\n9-2=7\n1+8=9\n7-4=3\n"
+  prefix_mutation:
+    swap_prob: 0.3
+    add_prob: 0.2
+    remove_prob: 0.2
+    max_prefix_examples: 8
+    min_prefix_examples: 2
+
+offspring:
+  # How offspring are trained from generated data
+  base: "base_checkpoint"  # Always start from base, not parent
+  n_steps: 200
+  batch_size: 16
+  learning_rate: 5.0e-4
+  weight_decay: 0.0
+  # No warmup for short fine-tuning
+  warmup_steps: 0
+
+evaluation:
+  # How offspring are scored
+  method: "greedy_completion"
+  # Feed "N+M=" and check top-1 token
+  max_new_tokens: 4
+  temperature: 0.0  # greedy
+
+checkpointing:
+  # What to save (disk space management)
+  save_parent_weights: true
+  save_offspring_weights: false  # Delete after scoring
+  save_generation_raw: true
+  save_generation_parsed: true
+  save_scores_detailed: true
+  save_prefixes: true
+  compress_old_rounds: true  # gzip rounds > current-2
+
+go_no_go:
+  # Automatic checks after each round
+  round_1:
+    min_valid_generation_rate: 0.5  # 50% of models generate valid output
+    min_score_std: 10               # Meaningful variance exists
+    min_best_vs_base: 0             # Best offspring >= base model
+    max_round_hours: 3.0            # Round completes in time
+  round_3:
+    require_best_score_increase: true
+    require_mean_score_increase: true
+    require_generation_quality_increase: true
+  round_5:
+    require_upward_trend: true
+    min_improvement_pct: 10  # Best round 5 score >= 110% of round 1
