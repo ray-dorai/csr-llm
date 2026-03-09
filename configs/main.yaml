@@ -93,7 +93,7 @@ evolution:
       generation_temp: 0.8
 
 generation:
-  n_examples: 100
+  n_examples: 500
   max_tokens_per_example: 20
   initial_prefix: "3+5=8\n9-2=7\n1+8=9\n7-4=3\n"
   prefix_mutation:
