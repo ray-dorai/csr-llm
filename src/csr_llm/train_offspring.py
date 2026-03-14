@@ -41,11 +41,22 @@ class GeneratedDataset(Dataset):
                 continue
             all_ids.extend(encode(tokenizer, ex.raw + "\n"))
 
-        for start in range(0, len(all_ids) - max_len, max_len):
-            chunk = [bos] + all_ids[start : start + max_len - 2] + [eos]
-            if len(chunk) < max_len:
-                chunk = chunk + [pad] * (max_len - len(chunk))
+        if not all_ids:
+            return
+
+        # Pack into max_len chunks matching pretraining format.
+        # If total tokens < max_len, make one padded chunk.
+        chunk_size = max_len - 2  # room for bos + eos
+        if len(all_ids) < chunk_size:
+            chunk = [bos] + all_ids + [eos]
+            chunk = chunk + [pad] * (max_len - len(chunk))
             self.samples.append(torch.tensor(chunk, dtype=torch.long))
+        else:
+            for start in range(0, len(all_ids) - chunk_size + 1, chunk_size):
+                chunk = [bos] + all_ids[start : start + chunk_size] + [eos]
+                if len(chunk) < max_len:
+                    chunk = chunk + [pad] * (max_len - len(chunk))
+                self.samples.append(torch.tensor(chunk, dtype=torch.long))
 
     def __len__(self):
         return len(self.samples)
