@@ -129,8 +129,10 @@ def train_lora_offspring(base_ckpt: Path, train_examples: list[str], tokenizer,
                          cfg: dict, device: str,
                          lora_rank: int = 8, n_steps: int = 300) -> TinyGPT:
     """Train base + LoRA adapter on given examples. Base weights stay frozen."""
-    model = load_model(base_ckpt, cfg).to(device)
+    # Apply LoRA before .to(device) so lora_A/B init on the right device
+    model = load_model(base_ckpt, cfg)
     model = apply_lora(model, rank=lora_rank, alpha=float(lora_rank * 2))
+    model = model.to(device)
 
     dataset = ArithmeticLoRADataset(train_examples, tokenizer, cfg["model"]["max_seq_len"])
     if len(dataset) == 0:
