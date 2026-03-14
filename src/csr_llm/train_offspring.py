@@ -31,18 +31,21 @@ class GeneratedDataset(Dataset):
         eos = tokenizer.token_to_id("<eos>")
         pad = tokenizer.token_to_id("<pad>")
 
+        # Pack multiple examples per sequence to match pretraining format.
+        # Pretraining uses [bos] + chain_of_examples + [eos] per chunk.
+        # Per-example BOS/EOS wrapping taught offspring to emit EOS after
+        # every single example, killing generation after ~1 line.
+        all_ids = []
         for ex in examples:
             if not ex.is_valid:
                 continue
-            # Use the raw text as training data (even if answer is wrong —
-            # selection pressure will favor parents that generate correct examples)
-            text = ex.raw
-            ids = [bos] + encode(tokenizer, text) + [eos]
-            if len(ids) > max_len:
-                ids = ids[:max_len]
-            else:
-                ids = ids + [pad] * (max_len - len(ids))
-            self.samples.append(torch.tensor(ids, dtype=torch.long))
+            all_ids.extend(encode(tokenizer, ex.raw + "\n"))
+
+        for start in range(0, len(all_ids) - max_len, max_len):
+            chunk = [bos] + all_ids[start : start + max_len - 2] + [eos]
+            if len(chunk) < max_len:
+                chunk = chunk + [pad] * (max_len - len(chunk))
+            self.samples.append(torch.tensor(chunk, dtype=torch.long))
 
     def __len__(self):
         return len(self.samples)

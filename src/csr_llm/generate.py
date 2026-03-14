@@ -47,6 +47,7 @@ def generate_examples(
         input_ids,
         max_new_tokens=total_new,
         temperature=temperature,
+        eos_token_id=tokenizer.token_to_id("<eos>"),
     )
 
     # Decode only the generated part (not the prefix)
