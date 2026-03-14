@@ -24,37 +24,52 @@ def generate_examples(
     max_tokens_per_example: int = 20,
     temperature: float = 1.0,
     device: str = "cuda",
+    batch_size: int = 32,
 ) -> str:
     """Prompt a model to generate arithmetic examples.
 
-    The model is given a prefix of correct examples and asked to
-    continue generating in the same format.
+    Generates each example independently in batches so that EOS on one
+    example does not kill the rest. Previously a single long generation
+    would stop at the first EOS (after ~1 pretraining chunk = ~16 examples),
+    starving the evolutionary loop of training data.
 
-    Returns raw text output.
+    Returns raw text output (one attempted example per line).
     """
     model = model.to(device)
     model.eval()
 
-    # Encode prefix
     prefix_ids = encode(tokenizer, prefix)
-    input_ids = torch.tensor([prefix_ids], dtype=torch.long, device=device)
+    prefix_len = len(prefix_ids)
+    eos_id = tokenizer.token_to_id("<eos>")
 
-    # Generate enough tokens for n_examples
-    # Each example is roughly "N+M=K\n" = ~6-8 tokens
-    total_new = n_examples * max_tokens_per_example
+    all_lines = []
+    remaining = n_examples
 
-    output_ids = model.generate(
-        input_ids,
-        max_new_tokens=total_new,
-        temperature=temperature,
-        eos_token_id=tokenizer.token_to_id("<eos>"),
-    )
+    while remaining > 0:
+        bs = min(batch_size, remaining)
+        # Repeat the prefix for each item in the batch
+        input_ids = torch.tensor(
+            [prefix_ids] * bs, dtype=torch.long, device=device
+        )
 
-    # Decode only the generated part (not the prefix)
-    generated_ids = output_ids[0, len(prefix_ids) :].tolist()
-    raw_text = decode(tokenizer, generated_ids)
+        output_ids = model.generate(
+            input_ids,
+            max_new_tokens=max_tokens_per_example,
+            temperature=temperature,
+            eos_token_id=eos_id,
+        )
 
-    return raw_text
+        for b in range(bs):
+            generated_ids = output_ids[b, prefix_len:].tolist()
+            text = decode(tokenizer, generated_ids)
+            # Take only the first line from each generation attempt
+            first_line = text.split("\n")[0].strip()
+            if first_line:
+                all_lines.append(first_line)
+
+        remaining -= bs
+
+    return "\n".join(all_lines)
 
 
 def generate_and_parse(
