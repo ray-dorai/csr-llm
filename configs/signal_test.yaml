@@ -1,0 +1,58 @@
+# Signal Test Configuration
+# Cost estimate: ~35 min on A40 = ~$0.23
+
+experiment:
+  name: "signal-test-001"
+  seed: 42
+  device: "cuda"
+  output_dir: "logs/signal-test-001"
+
+model:
+  architecture: "gpt2"
+  n_layers: 8
+  n_heads: 4
+  d_model: 256
+  d_ff: 1024
+  vocab_size: 19
+  max_seq_len: 128
+  dropout: 0.1
+
+tokenizer:
+  type: "char"
+  vocab_size: 19
+
+pretrain:
+  n_examples: 50000
+  n_epochs: 10
+  batch_size: 64
+  learning_rate: 3.0e-4
+  weight_decay: 0.01
+  warmup_steps: 200
+  save_every_epoch: false
+
+task:
+  type: "arithmetic"
+  operations: ["+", "-"]
+  operand_range: [0, 9]
+  test_set_size: 500
+  test_set_seed: 12345
+
+generation:
+  initial_prefix: "3+5=8\n9-2=7\n1+8=9\n7-4=3\n"
+  max_tokens_per_example: 20
+
+signal_test:
+  # Parent variants: fine-tune base on N examples (3 seeds each = 24 trials)
+  # Low N → low parent accuracy → poor generation quality
+  # High N → high parent accuracy → rich generation quality
+  parent_training_sizes: [10, 25, 50, 100, 250, 500, 1000, 5000]
+  parent_seeds: [1, 2, 3]
+  parent_n_steps: 500        # Fine-tune steps to create each parent
+
+  # Generation
+  n_gen_examples: 500        # Batched independent generation attempts
+  generation_temp: 1.2
+
+  # Offspring LoRA
+  lora_rank: 8               # ~65K trainable params vs 6M frozen base
+  lora_n_steps: 300          # Steps to train each offspring LoRA
