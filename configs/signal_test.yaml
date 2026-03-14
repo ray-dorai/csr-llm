@@ -41,6 +41,26 @@ generation:
   initial_prefix: "3+5=8\n9-2=7\n1+8=9\n7-4=3\n"
   max_tokens_per_example: 20
 
+# Required by config validator (not used in signal test)
+evolution:
+  population_size: 8
+  n_islands: 2
+  models_per_island: 4
+  survivors_per_island: 1
+  offspring_per_survivor: 4
+
+offspring:
+  n_steps: 200
+  batch_size: 16
+  learning_rate: 5.0e-4
+  weight_decay: 0.0
+  warmup_steps: 0
+
+evaluation:
+  method: "greedy_completion"
+  max_new_tokens: 4
+  temperature: 0.0
+
 signal_test:
   # Parent variants: fine-tune base on N examples (3 seeds each = 24 trials)
   # Low N → low parent accuracy → poor generation quality
