@@ -1,0 +1,45 @@
+# Code Self-Play Configuration
+# Cost estimate: ~15 min on A40 = ~$0.10
+#
+# Three conditions × 3 seeds = 9 runs
+# Each run: 20 rounds of LoRA training on model-generated or reference solutions
+#
+# Run with:
+#   python -m csr_llm.run_code_selfplay --config configs/code_selfplay.yaml
+
+experiment_name: "code-selfplay-001"
+seed: 42
+device: "cuda"
+output_dir: "logs/code-selfplay-001"
+
+# HuggingFace model — code-specific, small enough for A40
+# Alternatives:
+#   deepseek-ai/deepseek-coder-1.3b-base   (better, slower)
+#   microsoft/phi-1_5                       (1.3B, general)
+#   Salesforce/codegen2-1B                  (1B, code)
+model_name: "Salesforce/codegen-350M-mono"
+
+selfplay:
+  conditions: ["self_play", "oracle_curriculum", "random"]
+  seeds: [1, 2, 3]
+
+  # Rounds and training budget
+  n_rounds: 20                 # rounds of training
+  n_steps_per_round: 50        # LoRA gradient steps per round
+  n_attempts_per_round: 10     # generation attempts per round (self_play only)
+  advance_threshold: 0.6       # pass rate needed to advance to next difficulty level
+
+  # Generation
+  max_new_tokens: 150          # max tokens to generate per solution attempt
+  generation_temp: 0.8         # temperature for training generation (0=greedy)
+
+  # LoRA
+  lora_rank: 8
+  lora_lr: 2.0e-4
+  max_seq_len: 512
+
+  # Target modules for LoRA — codegen-350M uses qkv_proj
+  # For GPT-2: ["c_attn"]
+  # For LLaMA/Mistral: ["q_proj", "v_proj"]
+  # For deepseek-coder: ["q_proj", "v_proj"]
+  lora_target_modules: ["qkv_proj"]
