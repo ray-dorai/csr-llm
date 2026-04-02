@@ -62,8 +62,7 @@ python -m csr_llm.run_experiment --config configs/main.yaml
 
 ## Results
 
-*(To be updated after experiments)*
-
+Null.
 
 ## Acknowledgments
 
